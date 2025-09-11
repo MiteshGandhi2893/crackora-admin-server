@@ -10,7 +10,7 @@ const app = express();
 app.use(cors({
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
-    origin: ['http://localhost:5173', 'http://localhost:5174',"https://crackora-admin.vercel.app/", 'http://localhost:3000', 'https://crackora-admin.com', 'https://www.crackora-admin.com']
+    origin: ['http://localhost:5173', 'http://localhost:5174',"https://crackora-admin.vercel.app", 'http://localhost:3000', 'https://crackora-admin.com', 'https://www.crackora-admin.com']
 }));
 
 app.use(express.json());
