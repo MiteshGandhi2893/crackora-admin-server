@@ -32,20 +32,27 @@ router.get('/exams/:entranceId', async (req, res) => {
 
 
 // Save or update exam content
+// Save content + sections
 router.post("/exams/:examId/content", async (req, res) => {
   try {
     const { examId } = req.params;
-    const { content } = req.body;
+    const { content, sections } = req.body; // now expecting sections as array
 
     if (!mongoose.Types.ObjectId.isValid(examId)) {
       return res.status(400).json({ msg: "Invalid examId" });
     }
 
+    // Optional: validate sections array
+    if (!Array.isArray(sections)) {
+      return res.status(400).json({ msg: "Sections must be an array" });
+    }
+
     const updatedExam = await Exam.findByIdAndUpdate(
       examId,
-      { content },
+      { content, sections },
       { new: true }
     );
+
 
     res.json(updatedExam);
   } catch (error) {
@@ -61,12 +68,15 @@ router.get("/exams/:examId/content", async (req, res) => {
       return res.status(400).json({ msg: "Invalid examId" });
     }
 
-    const exam = await Exam.findById(examId).select("content");
+    const exam = await Exam.findById(examId).select("content sections");
     if (!exam) {
       return res.status(404).json({ msg: "Exam not found" });
     }
 
-    res.json({ content: exam.content || "" });
+    res.json({
+      content: exam.content || "",
+      sections: exam.sections || [],
+    });
   } catch (error) {
     res.status(500).json({ msg: error.message });
   }
