@@ -36,7 +36,7 @@ router.get('/exams/:entranceId', async (req, res) => {
 router.post("/exams/:examId/content", async (req, res) => {
   try {
     const { examId } = req.params;
-    const { content, sections } = req.body; // now expecting sections as array
+    const { content, sections, slug } = req.body; // now expecting sections as array
 
     if (!mongoose.Types.ObjectId.isValid(examId)) {
       return res.status(400).json({ msg: "Invalid examId" });
@@ -49,7 +49,7 @@ router.post("/exams/:examId/content", async (req, res) => {
 
     const updatedExam = await Exam.findByIdAndUpdate(
       examId,
-      { content, sections },
+      { content, sections, slug },
       { new: true }
     );
 
@@ -68,14 +68,17 @@ router.get("/exams/:examId/content", async (req, res) => {
       return res.status(400).json({ msg: "Invalid examId" });
     }
 
-    const exam = await Exam.findById(examId).select("content sections");
+    const exam = await Exam.findById(examId).select("content sections slug");
     if (!exam) {
       return res.status(404).json({ msg: "Exam not found" });
     }
 
+    console.log(exam.toObject())
+
     res.json({
       content: exam.content || "",
       sections: exam.sections || [],
+      slug: exam.slug || ''
     });
   } catch (error) {
     res.status(500).json({ msg: error.message });

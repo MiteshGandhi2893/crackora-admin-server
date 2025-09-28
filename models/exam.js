@@ -16,6 +16,7 @@ const examSchema = mongoose.Schema({
     type: String,
     required: [true, 'Please add exam title'],
   },
+  slug: String,
   description: { type: String },
   isActive: {
     type: Boolean,
