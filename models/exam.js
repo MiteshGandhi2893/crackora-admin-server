@@ -23,6 +23,7 @@ const examSchema = mongoose.Schema({
     default: true,
   },
   content: { type: String },
+  faq: { type: String },
   sections: {
     type: [sectionSchema],
     default: [],
