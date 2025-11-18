@@ -55,25 +55,52 @@ function validateCoursePackage(body) {
   return errors;
 }
 
-/* ==========================================================
-   @route   GET /api/course-packages
-   @desc    Get all course packages (optional filter by entranceID)
-========================================================== */
 router.get("/", async (req, res) => {
   try {
-    const { entranceID } = req.query;
-    const filter = entranceID ? { entranceID } : {};
+    const { entranceID, page = 1 } = req.query;
+    const limit = 50;
+    const skip = (page - 1) * limit;
 
-    const packages = await CoursePackage.find(filter)
-      .populate("entranceID", "title")
-      .sort({ createdAt: -1 });
+    const filter = entranceID
+      ? { entranceID: new mongoose.Types.ObjectId(entranceID) }
+      : {};
 
-    res.status(200).json(packages);
+    const packages = await CoursePackage.aggregate([
+      { $match: filter },
+
+      {
+        $lookup: {
+          from: "Entrances",
+          localField: "entranceID", // ✅ correct field name
+          foreignField: "_id",
+          as: "entranceDetails",
+        },
+      },
+      { $unwind: "$entranceDetails" },
+
+      { $addFields: { entranceName: "$entranceDetails.title" } },
+      { $sort: { entranceName: 1, title: 1 } },
+      { $skip: skip },
+      { $limit: limit },
+    ]);
+
+    const totalCount = await CoursePackage.countDocuments(filter);
+    const totalPages = Math.ceil(totalCount / limit);
+
+    res.status(200).json({
+      success: true,
+      currentPage: Number(page),
+      totalPages,
+      totalCount,
+      packages,
+    });
   } catch (error) {
     console.error("Error fetching course packages:", error);
     res.status(500).json({ message: "Server error", error });
   }
 });
+
+
 
 /* ==========================================================
    @route   GET /api/course-packages/:id
