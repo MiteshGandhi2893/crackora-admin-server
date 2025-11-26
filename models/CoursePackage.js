@@ -8,7 +8,7 @@ const coursePackageSchema = new mongoose.Schema({
   courseName: {
     type: String
   },
-  isActive: {type: Boolean}, // This will decide whether to show the course package to the students anymore
+  isActive: {type: Boolean, default: true}, // This will decide whether to show the course package to the students anymore
   // TODO: Add Learnest later when we buy it just link it to the actual course so that they can proceed and do the payment
   image: {type: String},
   title: {type: String},

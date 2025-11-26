@@ -49,7 +49,7 @@ router.post("/exams/:examId/content", async (req, res) => {
 
     const updatedExam = await Exam.findByIdAndUpdate(
       examId,
-      { content, sections, slug, faq },
+      { content, sections, slug, faq, title },
       { new: true }
     );
 
@@ -68,7 +68,7 @@ router.get("/exams/:examId/content", async (req, res) => {
       return res.status(400).json({ msg: "Invalid examId" });
     }
 
-    const exam = await Exam.findById(examId).select("content sections slug faq");
+    const exam = await Exam.findById(examId).select("content sections slug faq title");
     if (!exam) {
       return res.status(404).json({ msg: "Exam not found" });
     }
@@ -77,7 +77,8 @@ router.get("/exams/:examId/content", async (req, res) => {
       content: exam.content || "",
       faq: exam.faq,
       sections: exam.sections || [],
-      slug: exam.slug || ''
+      slug: exam.slug || '',
+      title: exam.title
     });
   } catch (error) {
     res.status(500).json({ msg: error.message });

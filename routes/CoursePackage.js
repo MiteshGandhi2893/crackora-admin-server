@@ -178,4 +178,125 @@ router.post("/", upload.single("image"), async (req, res) => {
   }
 });
 
+
+/* ==========================================================
+   @route   PUT /api/course-packages/:id
+   @desc    Update course package + optional image upload
+========================================================== */
+router.put("/:id", upload.single("image"), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid course package ID" });
+    }
+
+    const existingPackage = await CoursePackage.findById(id);
+    if (!existingPackage) {
+      return res.status(404).json({ message: "Course package not found" });
+    }
+
+    /* ----------------------------
+       VALIDATE REQUEST BODY
+    ---------------------------- */
+    const validationErrors = validateCoursePackage(req.body);
+    if (validationErrors.length > 0) {
+      return res.status(400).json({ errors: validationErrors });
+    }
+
+    /* ----------------------------
+       UPDATE NORMAL FIELDS
+    ---------------------------- */
+    existingPackage.entranceID = req.body.entranceID;
+    existingPackage.courseName = req.body.courseName;
+    existingPackage.title = req.body.title;
+    existingPackage.content = req.body.content || "";
+    existingPackage.price = req.body.price;
+    existingPackage.discountedPrice = req.body.discountedPrice || null;
+    existingPackage.teacher = req.body.teacher || "";
+    existingPackage.duration = req.body.duration || 0;
+    existingPackage.features = req.body.features || "";
+    existingPackage.examsCovered = req.body.examsCovered || [];
+    existingPackage.type = req.body.type || "";
+
+    /* ----------------------------
+       HANDLE IMAGE UPLOAD (OPTIONAL)
+    ---------------------------- */
+    if (req.file) {
+      const courseDir = path.join("public", "coursepackages", id);
+
+      // Create folder if missing
+      if (!fs.existsSync(courseDir)) {
+        fs.mkdirSync(courseDir, { recursive: true });
+      }
+
+      // Delete old image if exists
+      if (existingPackage.image) {
+        const oldImagePath = path.join("public", existingPackage.image);
+        if (fs.existsSync(oldImagePath)) fs.unlinkSync(oldImagePath);
+      }
+
+      // Save new image
+      const ext = path.extname(req.file.originalname);
+      const newPath = path.join(courseDir, `image${ext}`);
+      fs.renameSync(req.file.path, newPath);
+
+      existingPackage.image = `/coursepackages/${id}/image${ext}`;
+    }
+
+    /* ----------------------------
+       SAVE UPDATED PACKAGE
+    ---------------------------- */
+    const updated = await existingPackage.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Course package updated successfully",
+      data: updated,
+    });
+  } catch (error) {
+    console.error("Error updating course package:", error);
+    res.status(500).json({ message: "Server error", error });
+  }
+});
+
+
+/* ==========================================================
+   @route   PUT /api/course-packages/:id/status
+   @desc    Update only active/inactive status
+========================================================== */
+router.put("/:id/status", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isActive } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid course package ID" });
+    }
+
+    if (typeof isActive !== "boolean") {
+      return res.status(400).json({ message: "isActive must be true or false" });
+    }
+
+    const updated = await CoursePackage.findByIdAndUpdate(
+      id,
+      { isActive },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: "Course package not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Course package marked as ${isActive ? "Active" : "Inactive"}`,
+      data: updated,
+    });
+  } catch (error) {
+    console.error("Error updating status:", error);
+    res.status(500).json({ message: "Server error", error });
+  }
+});
+
 module.exports = router;
