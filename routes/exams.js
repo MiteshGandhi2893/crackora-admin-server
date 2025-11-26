@@ -36,7 +36,7 @@ router.get('/exams/:entranceId', async (req, res) => {
 router.post("/exams/:examId/content", async (req, res) => {
   try {
     const { examId } = req.params;
-    const { content, sections, slug, faq } = req.body; // now expecting sections as array
+    const { content, sections, slug, faq, title } = req.body; // now expecting sections as array
 
     if (!mongoose.Types.ObjectId.isValid(examId)) {
       return res.status(400).json({ msg: "Invalid examId" });
